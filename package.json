@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "node download.js"
+  },
+  "dependencies": {
+    "isomorphic-fetch": "^3.0.0"
+  }
+}
