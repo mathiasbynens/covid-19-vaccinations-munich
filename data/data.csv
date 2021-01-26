@@ -1,0 +1,3 @@
+date,pubDate,totalDosesReceived,totalDosesAdministered,dosesSentToClinics,firstDosesToNursingHomeResidents,firstDosesToOtherPriorityGroupMembers,secondDosesToNursingHomeResidents,secondDosesToOtherPriorityGroupMembers
+2021-01-21,2021-01-25,17100,8500,7800,5900,1000,1500,100
+2021-01-25,2021-01-26,21400,11800,9200,7000,1000,3700,100
