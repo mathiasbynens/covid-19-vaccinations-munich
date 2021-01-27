@@ -29,10 +29,18 @@ jobs:
 
       - name: Update data
         run: |
-          npm run build
           git config user.name 'Mathias Bynens'
           git config user.email 'mathias@qiwi.be'
           date=$(node -p 'new Date().toISOString()')
+          # Update the HTML artifacts if possible.
+          npm run download
           git add archive
           git commit archive -m "Import latest data @ ${date}" || true
+          git push
+          # Update the generated CSV. Do this separately in case the
+          # upstream HTML structure changed to the point of breaking the
+          # `extract-data.js` script.
+          npm run build
+          git add data
+          git commit data -m "Update CSV per latest data @ ${date}" || true
           git push
