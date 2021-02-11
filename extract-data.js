@@ -6,6 +6,9 @@ const files = fs.readdirSync('./archive', 'utf8')
   .filter(file => file.endsWith('.html'));
 
 const extractNumber = (text) => {
+  if (text === undefined) {
+    return text;
+  }
   return Number(text.replace(/\./g, ''));
 };
 
@@ -31,24 +34,24 @@ const extractDate = (text) => {
   // Since then, they are a bit more explicit. `text` is now something like
   // `'Montag, 25. Januar,'`.
   const result = /(?<day>\d{1,2})\. (?<month>[^,]+)/.exec(text);
-  const date = `2021-${months.get(result.groups.month)}-${result.groups.day}`;
+  const date = `2021-${months.get(result.groups.month)}-${result.groups.day.padStart(2, '0')}`;
   return date;
 };
 
+const getRegExp = (html, pubDate) => {
+  // I’m so sorry.
+  if (html.includes('durchgeführt:')) {
+    return /Seit dem Start der Corona-Schutzimpfungen am 27\. Dezember wurden bis einschließlich vergangenen (?<date>[a-zA-Z0-9., ]+) von den städtischen Impfteams insgesamt rund (?<totalDosesAdministered>[\d.]+) Impfungen durchgeführt: Im Impfzentrum (?<firstDosesToOtherPriorityGroupMembers>[\d.]+) Erst- und (?<secondDosesToOtherPriorityGroupMembers>[\d.]+) Zweitimpfungen sowie (?<firstDosesToNursingHomeResidents>[\d.]+) Erst- und (?<secondDosesToNursingHomeResidents>[\d.]+) Zweitimpfungen in den Alten- und Pflegeheimen. Darüber hinaus wurden rund (?<dosesSentToClinics>[\d.]+) Impfdosen an Münchner Kliniken abgegeben, die ihr Personal selbst impfen\./;
+  }
+  if (html.includes('Insgesamt wurden bislang')) {
+    return /Seit dem Start der Corona-Schutzimpfungen am 27\. Dezember hat die Stadt bislang rund (?<totalDosesReceived>[\d.]+) Impfdosen erhalten\. Davon wurden bis einschließlich vergangenen (?<date>[a-zA-Z0-9., ]+) von den städtischen Impfteams insgesamt rund (?<totalDosesAdministered>[\d.]+) Impfungen durchgeführt\.<\/p>[\n\s]*<p[^>]+>Insgesamt wurden bislang \(Stand [^)]+\) im Impfzentrum (?<firstDosesToOtherPriorityGroupMembers>[\d.]+) Erst- und (?<secondDosesToOtherPriorityGroupMembers>[\d.]+) Zweitimpfungen von Angehörigen der höchsten Priorisierungsgruppe, wie z\.B\. über 80-Jährige, Angehörige der Rettungsdienste und bevorrechtigte Beschäftigte in medizinischen Einrichtungen, durchgeführt\. Hinzu kommen (?<firstDosesToNursingHomeResidents>[\d.]+) Erst- und (?<secondDosesToNursingHomeResidents>[\d.]+) Zweitimpfungen in den Alten- und Pflegeheimen. Insgesamt rund (?<dosesSentToClinics>[\d.]+) Impfdosen wurden an Münchner Kliniken abgegeben, die ihr Personal selbst impfen\./;
+  }
+  return /Seit dem Start der Corona-Schutzimpfungen am 27\. Dezember hat die Stadt bislang rund (?<totalDosesReceived>[\d.]+) Impfdosen erhalten\. Davon wurden bis einschließlich vergangenen (?<date>[a-zA-Z0-9., ]+) von den städtischen Impfteams insgesamt rund (?<totalDosesAdministered>[\d.]+) Impfungen durchgeführt – (?<firstDosesToNursingHomeResidents>[\d.]+) Erst- und (?<secondDosesToNursingHomeResidents>[\d.]+) Zweitimpfungen in den (?:vollstationären Pflegeeinrichtungen|Alten- und Pflegeheimen) sowie (?<firstDosesToOtherPriorityGroupMembers>[\d.]+) Erst- und (?<secondDosesToOtherPriorityGroupMembers>[\d.]+) Zweitimpfungen von weiteren Angehörigen? der höchsten Priorisierungsgruppe, wie z\.B\. Angehörige der Rettungsdienste und bevorrechtigte Beschäftigte in medizinischen Einrichtungen. Rund (?<dosesSentToClinics>[\d.]+) Impfdosen wurden (?:insgesamt )?an (?:die )?Münchner Kliniken abgegeben\./;
+};
+
 const extractData = (html, pubDate) => {
-  // Oh boy.
-  const re = html.includes('Ingesamt wurden bislang') ?
-    /Seit dem Start der Corona-Schutzimpfungen am 27\. Dezember hat die Stadt bislang rund (?<totalDosesReceived>[\d.]+) Impfdosen erhalten\. Davon wurden bis einschließlich vergangenen (?<date>[a-zA-Z0-9., ]+) von den städtischen Impfteams insgesamt rund (?<totalDosesAdministered>[\d.]+) Impfungen durchgeführt\.<\/p>\n\s*<p style="[^"]+">Insgesamt wurden bislang \(Stand [^)]+\) im Impfzentrum (?<firstDosesToNursingHomeResidents>[\d.]+) Erst- und (?<secondDosesToNursingHomeResidents>[\d.]+) Zweitimpfungen von Angehörigen der höchsten Priorisierungsgruppe, wie z.B. über 80-Jährige, Angehörige der Rettungsdienste und bevorrechtigte Beschäftigte in medizinischen Einrichtungen, durchgeführt\. Hinzu kommen (?<firstDosesToNursingHomeResidents>[\d.]+) Erst- und (?<secondDosesToNursingHomeResidents>[\d.]+) Zweitimpfungen in den Alten- und Pflegeheimen. Insgesamt rund (?<dosesSentToClinics>[\d.]+) Impfdosen wurden an Münchner Kliniken abgegeben, die ihr Personal selbst impfen\./ :
-    /Seit dem Start der Corona-Schutzimpfungen am 27\. Dezember hat die Stadt bislang rund (?<totalDosesReceived>[\d.]+) Impfdosen erhalten\. Davon wurden bis einschließlich vergangenen (?<date>[a-zA-Z0-9., ]+) von den städtischen Impfteams insgesamt rund (?<totalDosesAdministered>[\d.]+) Impfungen durchgeführt – (?<firstDosesToNursingHomeResidents>[\d.]+) Erst- und (?<secondDosesToNursingHomeResidents>[\d.]+) Zweitimpfungen in den (?:vollstationären Pflegeeinrichtungen|Alten- und Pflegeheimen) sowie (?<firstDosesToOtherPriorityGroupMembers>[\d.]+) Erst- und (?<secondDosesToOtherPriorityGroupMembers>[\d.]+) Zweitimpfungen von weiteren Angehörigen? der höchsten Priorisierungsgruppe, wie z.B. Angehörige der Rettungsdienste und bevorrechtigte Beschäftigte in medizinischen Einrichtungen. Rund (?<dosesSentToClinics>[\d.]+) Impfdosen wurden (?:insgesamt )?an (?:die )?Münchner Kliniken abgegeben\./;
+  const re = getRegExp(html, pubDate);
   const result = re.exec(html);
-
-/*
-		<p style="margin-left:0cm; margin-right:0cm">Seit dem Start der Corona-Schutzimpfungen am 27. Dezember hat die Stadt bislang rund 37.900 Impfdosen erhalten. Davon wurden bis einschließlich vergangenen Donnerstag, 4. Februar, von den städtischen Impfteams insgesamt rund 21.800 Impfungen durchgeführt.</p>
-<p style="margin-left:0cm; margin-right:0cm">Insgesamt wurden bislang (Stand 4.2.) im Impfzentrum 1.800 Erst- und 600 Zweitimpfungen von Angehörigen der höchsten Priorisierungsgruppe, wie z.B. über 80-Jährige, Angehörige der Rettungsdienste und bevorrechtigte Beschäftigte in medizinischen Einrichtungen, durchgeführt. Hinzu kommen 11.200 Erst- und 8.200 Zweitimpfungen in den Alten- und Pflegeheimen. Insgesamt rund 13.100 Impfdosen wurden an Münchner Kliniken abgegeben, die ihr Personal selbst impfen.</p>
-<p style="margin-left:0cm; margin-right:0cm">Der Fortschritt der Impfkampagne in München hängt davon ab, wieviel Impfstoff der Stadt zur Verfügung gestellt wird.</p>
-
-*/
-
   const data = {
     date: extractDate(result.groups.date),
     pubDate: pubDate,
@@ -66,6 +69,7 @@ const extractData = (html, pubDate) => {
 const map = new Map();
 let prev = '';
 for (const file of files) {
+  console.log(file);
   const pubDate = file.slice(0, 'yyyy-mm-dd'.length);
   const contents = fs.readFileSync(`./archive/${file}`, 'utf8').toString();
   const data = extractData(contents, pubDate);
