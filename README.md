@@ -4,3 +4,7 @@ This repository archives distinct versions of the HTML document at <https://www.
 
 - [Munich vaccination data in CSV format](https://github.com/mathiasbynens/covid-19-vaccinations-munich/blob/main/data/data.csv)
 - [Archive of HTML snapshots](https://github.com/mathiasbynens/covid-19-vaccinations-munich/tree/main/archive)
+
+## Related projects
+
+To view vaccination data for each German state, refer to [mathiasbynens/covid-19-vaccinations-germany](https://github.com/mathiasbynens/covid-19-vaccinations-germany).
