@@ -40,6 +40,9 @@ const extractDate = (text) => {
 
 const getRegExp = (html, pubDate) => {
   // I’m so sorry.
+  if (html.includes('Auf das Personal')) {
+    return /Bis einschließlich vergangenen (?<date>[a-zäA-Z0-9., ]+) wurden in München insgesamt rund (?<totalDosesAdministered>[\d.]+) Impfungen durchgeführt \((?<totalFirstDosesAdministered>[\d.]+) Erst- und (?<totalSecondDosesAdministered>[\d.]+) Zweitimpfungen\). Auf das Personal der Münchner Klinken entfallen dabei (?<firstDosesToClinicalPersonnel>[\d.]+) Erst- und (?<secondDosesToClinicalPersonnel>[\d.]+) Zweitimpfungen\.<\/p>\s*\n<p[^>]+>Im Impfzentrum wurden (?<firstDosesInVaccinationCenter>[\d.]+) Erst- und (?<secondDosesInVaccinationCenter>[\d.]+) Zweitimpfungen durchgeführt, im ISAR Klinikum fanden (?<firstDosesInIsarClinic>[\d.]+) Erstimpfungen von Grundschul- und Kitapersonal statt und die mobilen Impfteams verabreichten (?<firstDosesMobileTeams>[\d.]+) Erst- und (?<secondDosesMobileTeams>[\d.]+) Zweitimpfungen in Alten- und Pflegeheimen, Behinderteneinrichtungen sowie Alten- und Service-Zentren\./;
+  }
   if (html.includes('durchgeführt:')) {
     return /(?:Seit dem Start der Corona-Schutzimpfungen am 27\. Dezember wurden b|B)is einschließlich vergangenen (?<date>[a-zäA-Z0-9., ]+)(?:wurden )? von den städtischen Impfteams insgesamt rund (?<totalDosesAdministered>[\d.]+) (?:Corona-Schutzi|I)mpfungen durchgeführt: [Ii]m Impfzentrum (?<firstDosesToOtherPriorityGroupMembers>[\d.]+) Erst- und (?<secondDosesToOtherPriorityGroupMembers>[\d.]+) Zweitimpfungen sowie (?<firstDosesToNursingHomeResidents>[\d.]+) Erst- und (?<secondDosesToNursingHomeResidents>[\d.]+) Zweitimpfungen in den Alten- und Pflegeheimen\.(?:(?:<br>)? |<\/p>\s*\n<p[^>]+>)Darüber hinaus wurden rund (?<dosesSentToClinics>[\d.]+) Impfdosen an Münchner Kliniken abgegeben, die ihr Personal selbst impfen\./;
   }
@@ -57,10 +60,18 @@ const extractData = (html, pubDate) => {
     pubDate: pubDate,
     totalDosesReceived: extractNumber(result.groups.totalDosesReceived),
     totalDosesAdministered: extractNumber(result.groups.totalDosesAdministered),
+    totalFirstDosesAdministered: extractNumber(result.groups.totalFirstDosesAdministered),
     dosesSentToClinics: extractNumber(result.groups.dosesSentToClinics),
+    firstDosesInVaccinationCenter: extractNumber(result.groups.firstDosesInVaccinationCenter),
+    firstDosesMobileTeams: extractNumber(result.groups.firstDosesMobileTeams),
     firstDosesToNursingHomeResidents: extractNumber(result.groups.firstDosesToNursingHomeResidents),
+    firstDosesToClinicalPersonnel: extractNumber(result.groups.firstDosesToClinicalPersonnel),
     firstDosesToOtherPriorityGroupMembers: extractNumber(result.groups.firstDosesToOtherPriorityGroupMembers),
+    firstDosesInIsarClinic: extractNumber(result.groups.firstDosesInIsarClinic),
+    secondDosesInVaccinationCenter: extractNumber(result.groups.secondDosesInVaccinationCenter),
+    secondDosesMobileTeams: extractNumber(result.groups.secondDosesMobileTeams),
     secondDosesToNursingHomeResidents: extractNumber(result.groups.secondDosesToNursingHomeResidents),
+    secondDosesToClinicalPersonnel: extractNumber(result.groups.secondDosesToClinicalPersonnel),
     secondDosesToOtherPriorityGroupMembers: extractNumber(result.groups.secondDosesToOtherPriorityGroupMembers),
   };
   return data;
