@@ -5,6 +5,13 @@ const stringifyCsv = require('csv-stringify/lib/sync');
 const files = fs.readdirSync('./archive', 'utf8')
   .filter(file => file.endsWith('.html'));
 
+const extractPercentage = (text) => {
+  if (text === undefined) {
+    return text;
+  }
+  return Number(text.replace(/,/g, '.'));
+};
+
 const extractNumber = (text) => {
   if (text === undefined) {
     return text;
@@ -27,6 +34,12 @@ const months = new Map([
   ['Dezember', '12'],
 ]);
 const extractDate = (text) => {
+  const match = /(?<day>\d{1,2})\.(?<month>\d{1,2})\./.exec(text);
+  if (match) {
+    return `2021-${
+      match.groups.month.padStart(2, '0')}-${
+      match.groups.day.padStart(2, '0')}`;
+  }
   if (text === 'Donnerstag') {
     // Until pubDate=2021-01-25 they just referred to “last Thursday”.
     return '2021-01-21';
@@ -40,6 +53,9 @@ const extractDate = (text) => {
 
 const getRegExp = (html, pubDate) => {
   // I’m so sorry.
+  if (html.includes('>Bislang')) {
+    return /Bislang \(Stand (?<date>[a-zäA-Z0-9., ]+)\) wurden in München insgesamt rund (?<totalDosesAdministered>[\d.]+) Impfungen durchgeführt \((?<totalFirstDosesAdministered>[\d.]+) Erst- und (?<totalSecondDosesAdministered>[\d.]+) Zweitimpfungen\)\. Die Münchner <strong>Impfquote<\/strong> liegt damit, bezogen auf die impffähige Bevölkerung ab 16 Jahren, bei den Erstimpfungen bei (?<percentageVaccinableFirstDose>[0-9,]+) % und bei den Zweitimpfungen bei (?<percentageVaccinableSecondDose>[0-9,]+) % \(Münchner Gesamtbevölkerung (?<percentageFirstDose>[0-9,]+) % \/ (?<percentageSecondDose>[0-9,]+) %\)\./;
+  }
   if (html.includes('Kitapersonal sowie')) {
     return /Bis einschließlich vergangenen (?<date>[a-zäA-Z0-9., ]+) wurden in München insgesamt rund (?<totalDosesAdministered>[\d.]+) Impfungen durchgeführt \((?<totalFirstDosesAdministered>[\d.]+) Erst- und (?<totalSecondDosesAdministered>[\d.]+) Zweitimpfungen\).(?:\s+|<\/p>\s*\n<p[^>]+>)Im Impfzentrum wurden (?<firstDosesInVaccinationCenter>[\d.]+) Erst- und (?<secondDosesInVaccinationCenter>[\d.]+) Zweitimpfungen durchgeführt, im ISAR Klinikum fanden(?: bislang)? (?<firstDosesInIsarClinic>[\d.]+) Erstimpfungen von Grundschul- und Kitapersonal(?: sowie von Münchner\*innen über 60 Jahre im Rahmen der AstraZeneca-Sonderaktion)? statt und die mobilen Impfteams verabreichten (?<firstDosesMobileTeams>[\d.]+) Erst- und (?<secondDosesMobileTeams>[\d.]+) Zweitimpfungen in Alten- und Pflegeheimen, Behinderteneinrichtungen sowie Alten- und Service-Zentren(?:\.| \(Stand jeweils [\d.]+\)) Auf das Personal der Münchner Kliniken entfallen (?<firstDosesToClinicalPersonnel>[\d.]+) (?:&nbsp;)?Erst- und (?<secondDosesToClinicalPersonnel>[\d.]+) Zweitimpfungen\. In Hausarztpraxen wurden bisher rund (?<totalFirstDosesAtDoctors>[\d.]+) Erst- und (?<totalSecondDosesAtDoctors>[\d.]+) Zweitimpfungen durchgeführt/;
   }
@@ -64,6 +80,10 @@ const extractData = (html, pubDate) => {
   const data = {
     date: extractDate(result.groups.date),
     pubDate: pubDate,
+    percentageFirstDose: extractPercentage(result.groups.percentageFirstDose),
+    percentageSecondDose: extractPercentage(result.groups.percentageSecondDose),
+    percentageVaccinableFirstDose: extractPercentage(result.groups.percentageVaccinableFirstDose),
+    percentageVaccinableSecondDose: extractPercentage(result.groups.percentageVaccinableSecondDose),
     totalDosesReceived: extractNumber(result.groups.totalDosesReceived),
     totalDosesAdministered: extractNumber(result.groups.totalDosesAdministered),
     totalFirstDosesAdministered: extractNumber(result.groups.totalFirstDosesAdministered),
