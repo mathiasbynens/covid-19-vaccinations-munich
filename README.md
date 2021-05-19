@@ -7,4 +7,6 @@ This repository archives distinct versions of the HTML document at <https://www.
 
 ## Related projects
 
+You can [preview the raw data provided by this repository in GitHub’s Flat Viewer](https://flatgithub.com/mathiasbynens/covid-19-vaccinations-munich).
+
 To view vaccination data for each German state, refer to [mathiasbynens/covid-19-vaccinations-germany](https://github.com/mathiasbynens/covid-19-vaccinations-germany).
