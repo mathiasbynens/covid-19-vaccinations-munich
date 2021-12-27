@@ -40,7 +40,7 @@ jobs:
           # Update the generated CSV. Do this separately in case the
           # upstream HTML structure changed to the point of breaking the
           # `extract-data.js` script.
-          npm run build
+          npm run build || true
           git add data
           git commit data -m "Update CSV per latest data @ ${date}" || true
           git push
